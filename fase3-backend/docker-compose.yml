@@ -33,6 +33,12 @@ services:
     depends_on:
       - productos-service
 
+  citas-service:
+    <<: *servicio-java
+    build: ./citas-service
+    ports:
+      - "127.0.0.1:8084:8084"
+
   nginx:
     image: nginx:1.27-alpine
     ports:
@@ -46,3 +52,4 @@ services:
       - productos-service
       - auth-service
       - ventas-service
+      - citas-service
