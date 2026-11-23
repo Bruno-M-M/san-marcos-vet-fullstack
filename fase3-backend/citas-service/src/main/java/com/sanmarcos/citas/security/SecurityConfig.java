@@ -41,11 +41,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // Comentarios: publicar y leer los aprobados es público.
+                        // Publicar un comentario es público (formulario del Home).
                         .requestMatchers(HttpMethod.POST, "/api/v1/comentarios").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/comentarios").permitAll()
-                        // Moderar (ver todos, aprobar, eliminar): solo el administrador.
-                        .requestMatchers("/api/v1/comentarios/**").hasRole("ADMINISTRADOR")
+                        // Ver y eliminar comentarios: solo el administrador.
+                        .requestMatchers("/api/v1/comentarios", "/api/v1/comentarios/**")
+                                .hasRole("ADMINISTRADOR")
                         .anyRequest().authenticated())
                 .addFilterBefore(new JwtAuthFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
         return http.build();
