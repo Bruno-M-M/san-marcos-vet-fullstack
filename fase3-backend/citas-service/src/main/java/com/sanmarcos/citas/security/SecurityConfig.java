@@ -41,6 +41,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // El catálogo de servicios es público (solo lectura).
+                        .requestMatchers(HttpMethod.GET, "/api/v1/servicios", "/api/v1/servicios/**").permitAll()
                         // Publicar un comentario es público (formulario del Home).
                         .requestMatchers(HttpMethod.POST, "/api/v1/comentarios").permitAll()
                         // Ver y eliminar comentarios: solo el administrador.
