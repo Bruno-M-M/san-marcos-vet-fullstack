@@ -3,6 +3,9 @@ x-servicio-java: &servicio-java
   environment:
     WALLET_DIR: /wallet
     JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+    # Oracle Free limita las sesiones: pool chico para que quepan los 4 servicios.
+    SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "3"
+    SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
   volumes:
     - /opt/wallet:/wallet:ro
   mem_limit: 640m
@@ -27,6 +30,8 @@ services:
     environment:
       WALLET_DIR: /wallet
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60"
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "3"
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
       PRODUCTOS_URL: http://productos-service:8081
     ports:
       - "127.0.0.1:8083:8083"
