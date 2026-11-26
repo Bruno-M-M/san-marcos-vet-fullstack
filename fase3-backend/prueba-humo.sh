@@ -25,6 +25,7 @@ echo "== Frontend y catálogo"
 comprobar "La tienda abre"                 200 "$(codigo "${BASE}/")"
 comprobar "Lista de productos"             200 "$(codigo "${BASE}/api/v1/productos")"
 comprobar "Lista de categorías"            200 "$(codigo "${BASE}/api/v1/categorias")"
+comprobar "Lista de servicios"             200 "$(codigo "${BASE}/api/v1/servicios")"
 comprobar "Recargar una ruta de React"     200 "$(codigo "${BASE}/admin/productos")"
 
 echo "== Seguridad (sin token)"

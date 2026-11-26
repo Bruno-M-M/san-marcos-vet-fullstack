@@ -15,7 +15,7 @@ import BlogDetalle from "./pages/BlogDetalle.jsx";
 import Contacto from "./pages/Contacto.jsx";
 import Login from "./pages/Login.jsx";
 import Registro from "./pages/Registro.jsx";
-import Pendiente from "./pages/Pendiente.jsx";
+import Servicios from "./pages/Servicios.jsx";
 import NoEncontrado from "./pages/NoEncontrado.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import AdminComentarios from "./pages/admin/AdminComentarios.jsx";
@@ -32,11 +32,6 @@ import MisCompras from "./pages/MisCompras.jsx";
 import RutaRol from "./components/RutaRol.jsx";
 import { ROL_CLIENTE } from "./api/session.js";
 
-// Páginas que aún no se migran
-const paginasPendientes = [
-    ["servicios", "Servicios"],
-];
-
 function App() {
     return (
         <BrowserRouter>
@@ -52,9 +47,7 @@ function App() {
                         <Route path="blogs" element={<Blogs />} />
                         <Route path="blogs/:id" element={<BlogDetalle />} />
                         <Route path="contacto" element={<Contacto />} />
-                        {paginasPendientes.map(([ruta, titulo]) => (
-                            <Route key={ruta} path={ruta} element={<Pendiente titulo={titulo} />} />
-                        ))}
+                        <Route path="servicios" element={<Servicios />} />
                         <Route path="checkout" element={ <RutaCliente> <Checkout /> </RutaCliente> } />
                         <Route path="checkout/boleta/:id" element={ <RutaCliente> <BoletaDetalle /> </RutaCliente> } />
                         <Route path="mis-compras" element={ <RutaRol roles={[ROL_CLIENTE]}> <MisCompras /> </RutaRol> } />
