@@ -1,8 +1,10 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { vi } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Home from "./Home.jsx";
 
-const CLAVE = "comentarios_san_marcos";
+const api = vi.hoisted(() => ({ publicarComentario: vi.fn() }));
+vi.mock("../api/comentarios.js", () => api);
 
 // Home usa <Link>, así que necesita un Router alrededor
 function renderHome() {
@@ -22,7 +24,7 @@ function escribirComentario({ nombre, correo, comentario }) {
 
 describe("Home", () => {
   beforeEach(() => {
-    localStorage.clear();
+    api.publicarComentario.mockReset();
   });
 
   it("muestra el título principal del hero", () => {
@@ -44,7 +46,8 @@ describe("Home", () => {
     expect(screen.getByRole("link", { name: /ver blogs/i }).getAttribute("href")).toBe("/blogs");
   });
 
-  it("un comentario válido se guarda en localStorage con id y fecha", () => {
+  it("un comentario válido se envía a la API con el correo en minúsculas", async () => {
+    api.publicarComentario.mockResolvedValue({ id: 1 });
     renderHome();
     escribirComentario({
       nombre: "María Pérez",
@@ -52,16 +55,16 @@ describe("Home", () => {
       comentario: "Excelente atención",
     });
 
-    const guardados = JSON.parse(localStorage.getItem(CLAVE));
-    expect(guardados.length).toBe(1);
-    expect(guardados[0].nombre).toBe("María Pérez");
-    expect(guardados[0].correo).toBe("maria@gmail.com"); // el formulario lo pasa a minúsculas
-    expect(guardados[0].id).toBeDefined();
-    expect(guardados[0].fecha).toBeTruthy();
-    expect(screen.getByText(/tu mensaje fue enviado correctamente/i)).toBeTruthy();
+    expect(await screen.findByText(/tu mensaje fue enviado correctamente/i)).toBeTruthy();
+    expect(api.publicarComentario).toHaveBeenCalledTimes(1);
+    expect(api.publicarComentario).toHaveBeenCalledWith({
+      nombre: "María Pérez",
+      correo: "maria@gmail.com", // el formulario lo pasa a minúsculas
+      comentario: "Excelente atención",
+    });
   });
 
-  it("un comentario con dominio de correo no permitido NO se guarda", () => {
+  it("un comentario con dominio de correo no permitido NO se envía", () => {
     renderHome();
     escribirComentario({
       nombre: "Pedro",
@@ -69,26 +72,37 @@ describe("Home", () => {
       comentario: "Hola",
     });
 
-    const guardados = JSON.parse(localStorage.getItem(CLAVE));
-    expect(guardados.length).toBe(0);
+    expect(api.publicarComentario).not.toHaveBeenCalled();
     expect(screen.queryByText(/tu mensaje fue enviado correctamente/i)).toBeNull();
   });
 
-  it("conserva los comentarios previos y agrega el nuevo al inicio", () => {
-    localStorage.setItem(
-      CLAVE,
-      JSON.stringify([{ id: 1, fecha: "01-01-2026", nombre: "Antiguo", correo: "a@gmail.com", comentario: "Viejo" }])
-    );
+  it("si el servidor rechaza el comentario, muestra el error y conserva el texto", async () => {
+    api.publicarComentario.mockRejectedValue({
+      response: { data: { mensaje: "Hay datos inválidos.", errores: { correo: "Correo no permitido." } } },
+    });
     renderHome();
     escribirComentario({
-      nombre: "Nuevo",
-      correo: "nuevo@duoc.cl",
-      comentario: "Reciente",
+      nombre: "Ana",
+      correo: "ana@gmail.com",
+      comentario: "Hola",
     });
 
-    const guardados = JSON.parse(localStorage.getItem(CLAVE));
-    expect(guardados.length).toBe(2);
-    expect(guardados[0].nombre).toBe("Nuevo");
-    expect(guardados[1].nombre).toBe("Antiguo");
+    expect(await screen.findByText("Correo no permitido.")).toBeTruthy();
+    expect(screen.queryByText(/tu mensaje fue enviado correctamente/i)).toBeNull();
+    await waitFor(() => {
+      expect(screen.getByLabelText(/nombre completo/i).value).toBe("Ana");
+    });
+  });
+
+  it("si no hay conexión con el servidor, avisa al visitante", async () => {
+    api.publicarComentario.mockRejectedValue(new Error("Network Error"));
+    renderHome();
+    escribirComentario({
+      nombre: "Ana",
+      correo: "ana@gmail.com",
+      comentario: "Hola",
+    });
+
+    expect(await screen.findByText("No se pudo conectar con el servidor.")).toBeTruthy();
   });
 });

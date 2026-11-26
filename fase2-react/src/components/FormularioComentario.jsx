@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { mensajeDeError } from "../api/errores.js";
 
 const Dominios_permitidos = ["duoc.cl", "profesor.duoc.cl", "gmail.com"];
 const max_comentario = 500;
@@ -12,6 +13,8 @@ function FormularioComentario({ onEnviar }) {
     const [form, setForm] = useState({ nombre: "", correo: "", comentario: "" });
     const [intento, setIntento] = useState(false);
     const [enviado, setEnviado] = useState(false);
+    const [enviando, setEnviando] = useState(false);
+    const [errorServidor, setErrorServidor] = useState("");
 
     const errores = {
         nombre: form.nombre.trim() === "",
@@ -24,20 +27,29 @@ function FormularioComentario({ onEnviar }) {
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIntento(true);
         if (errores.nombre || errores.correo || errores.comentario) return;
 
-        onEnviar({
-            nombre: form.nombre.trim(),
-            correo: form.correo.trim().toLowerCase(),
-            comentario: form.comentario.trim(),
-        });
-
-        setEnviado(true);
-        setForm({ nombre: "", correo: "", comentario: "" });
-        setIntento(false);
+        setEnviando(true);
+        setEnviado(false);
+        setErrorServidor("");
+        try {
+            await onEnviar({
+                nombre: form.nombre.trim(),
+                correo: form.correo.trim().toLowerCase(),
+                comentario: form.comentario.trim(),
+            });
+            setEnviado(true);
+            setForm({ nombre: "", correo: "", comentario: "" });
+            setIntento(false);
+        } catch (error) {
+            // Si falla, el texto queda en el formulario para poder reintentar.
+            setErrorServidor(mensajeDeError(error, "No se pudo enviar tu comentario."));
+        } finally {
+            setEnviando(false);
+        }
     };
 
     const claseCampo = (campo) =>
@@ -49,6 +61,12 @@ function FormularioComentario({ onEnviar }) {
                 <div className="alert alert-success" role="alert">
                     <i className="bi bi-check-circle-fill"></i> ¡Gracias! Tu mensaje fue enviado
                     correctamente.
+                </div>
+            )}
+
+            {errorServidor && (
+                <div className="alert alert-danger" role="alert">
+                    {errorServidor}
                 </div>
             )}
 
@@ -118,7 +136,7 @@ function FormularioComentario({ onEnviar }) {
                     </div>
                 </div>
 
-                <button type="submit" className="btn btn-brand w-100">
+                <button type="submit" className="btn btn-brand w-100" disabled={enviando}>
                     <i className="bi bi-send-fill"></i> Enviar mensaje
                 </button>
             </form>

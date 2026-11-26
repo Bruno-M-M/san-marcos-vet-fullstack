@@ -1,38 +1,11 @@
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 import FormularioComentario from "../components/FormularioComentario";
-
-const CLAVE_STORAGE = "comentarios_san_marcos";
+import { publicarComentario } from "../api/comentarios.js";
 
 function Home() {
-    const [comentarios, setComentarios] = useState(() => {
-        try {
-            const guardados = localStorage.getItem(CLAVE_STORAGE);
-            return guardados ? JSON.parse(guardados) : [];
-        } catch {
-            return [];
-        }
-    });
-
-    // Cada vez que cambian, se guardan en el navegador.
-    useEffect(() => {
-        try {
-            localStorage.setItem(CLAVE_STORAGE, JSON.stringify(comentarios));
-        } catch {
-            // si localStorage no está disponible, simplemente no se guarda
-        }
-    }, [comentarios]);
-
-    const agregarComentario = (datos) => {
-        const nuevo = {
-            id: Date.now(),
-            fecha: new Date().toLocaleDateString("es-CL"),
-            ...datos,
-        };
-        // el más nuevo primero
-        setComentarios((prev) => [nuevo, ...prev]);
-    };
+    // El formulario captura el error y lo muestra; aquí solo se envía.
+    const agregarComentario = (datos) => publicarComentario(datos);
 
     return (
         <>
