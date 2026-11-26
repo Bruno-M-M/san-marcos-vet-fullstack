@@ -1,33 +1,58 @@
 import { useState, useEffect } from "react";
+import { eliminarComentario as eliminarEnApi, listarComentarios } from "../../api/comentarios.js";
+import { mensajeDeError } from "../../api/errores.js";
 
-const CLAVE_STORAGE = "comentarios_san_marcos";
+// La API devuelve la fecha como "2026-11-20T10:30:00"; se muestra en formato chileno.
+function formatearFecha(fecha) {
+    const d = new Date(fecha);
+    return Number.isNaN(d.getTime()) ? fecha : d.toLocaleString("es-CL");
+}
 
 function AdminComentarios() {
-    const [comentarios, setComentarios] = useState(() => {
-        try {
-            const guardados = localStorage.getItem(CLAVE_STORAGE);
-            return guardados ? JSON.parse(guardados) : [];
-        } catch {
-            return [];
-        }
-    });
+    const [comentarios, setComentarios] = useState([]);
+    const [cargando, setCargando] = useState(true);
+    const [error, setError] = useState("");
 
     useEffect(() => {
-        try {
-            localStorage.setItem(CLAVE_STORAGE, JSON.stringify(comentarios));
-        } catch {
-        }
-    }, [comentarios]);
+        let activo = true;
+        listarComentarios()
+            .then((lista) => {
+                if (activo) setComentarios(lista);
+            })
+            .catch((e) => {
+                if (activo) setError(mensajeDeError(e, "No se pudieron cargar los comentarios."));
+            })
+            .finally(() => {
+                if (activo) setCargando(false);
+            });
+        return () => {
+            activo = false;
+        };
+    }, []);
 
-    const eliminarComentario = (id) => {
-        setComentarios((prev) => prev.filter((c) => c.id !== id));
+    const eliminarComentario = async (id) => {
+        setError("");
+        try {
+            await eliminarEnApi(id);
+            setComentarios((prev) => prev.filter((c) => c.id !== id));
+        } catch (e) {
+            setError(mensajeDeError(e, "No se pudo eliminar el comentario."));
+        }
     };
 
     return (
         <>
             <h2 className="mb-4">Comentarios ({comentarios.length})</h2>
 
-            {comentarios.length === 0 ? (
+            {error && (
+                <div className="alert alert-danger" role="alert">
+                    {error}
+                </div>
+            )}
+
+            {cargando ? (
+                <p className="text-muted">Cargando comentarios...</p>
+            ) : comentarios.length === 0 ? (
                 <p className="text-muted">Todavía no hay comentarios.</p>
             ) : (
                 <div className="table-responsive">
@@ -44,7 +69,7 @@ function AdminComentarios() {
                         <tbody>
                             {comentarios.map((c) => (
                                 <tr key={c.id}>
-                                    <td>{c.fecha}</td>
+                                    <td>{formatearFecha(c.fecha)}</td>
                                     <td>{c.nombre}</td>
                                     <td>{c.correo}</td>
                                     <td style={{ maxWidth: 350 }}>{c.comentario}</td>

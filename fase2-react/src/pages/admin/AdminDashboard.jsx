@@ -2,22 +2,25 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { cerrarSesion as limpiarSesion } from "../../api/auth.js";
 import { leerUsuario } from "../../api/session.js";
-
-const CLAVE_STORAGE = "comentarios_san_marcos";
+import { listarComentarios } from "../../api/comentarios.js";
 
 export default function AdminDashboard() {
     const [comentarios, setComentarios] = useState([]);
     const usuario = leerUsuario();
 
     useEffect(() => {
-        try {
-            const guardados = localStorage.getItem(CLAVE_STORAGE);
-            if (guardados) {
-                setComentarios(JSON.parse(guardados));
-            }
-        } catch (error) {
-            console.error("Error al cargar comentarios:", error);
-        }
+        let activo = true;
+        listarComentarios()
+            .then((lista) => {
+                if (activo) setComentarios(lista);
+            })
+            .catch((error) => {
+                // El resto del panel sigue funcionando; solo queda en cero.
+                console.error("Error al cargar comentarios:", error);
+            });
+        return () => {
+            activo = false;
+        };
     }, []);
 
     const cerrarSesion = () => {
