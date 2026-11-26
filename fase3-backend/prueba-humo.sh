@@ -30,6 +30,9 @@ comprobar "Recargar una ruta de React"     200 "$(codigo "${BASE}/admin/producto
 echo "== Seguridad (sin token)"
 comprobar "Crear producto sin token"       401 "$(codigo -X POST "${BASE}/api/v1/productos" -H 'Content-Type: application/json' -d '{}')"
 comprobar "Ver órdenes sin token"          401 "$(codigo "${BASE}/api/v1/boletas")"
+comprobar "Ver comentarios sin token"      401 "$(codigo "${BASE}/api/v1/comentarios")"
+# Con un correo inválido responde 400 sin guardar nada en la base.
+comprobar "Comentario inválido es rechazado" 400 "$(codigo -X POST "${BASE}/api/v1/comentarios" -H 'Content-Type: application/json' -d '{"nombre":"Prueba","correo":"x@x.com","comentario":"Prueba"}')"
 
 echo "== Login"
 RESPUESTA="$(curl -s -X POST "${BASE}/api/v1/auth/login" -H 'Content-Type: application/json' \
